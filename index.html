@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Poko Poko Blast</title>
+<title>Nikoniko-Chain_Colorful-Block-Puzzle</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap">
 <style>
 :root{
@@ -229,7 +229,7 @@ body{
   // ---------- language (praise words like GREAT! / COMBO! stay in English in both languages) ----------
   const I18N = {
     ja: {
-      title: 'Poko Poko Blast', level: n => `レベル ${n}`, movesLbl: 'のこり手数', score: 'スコア', target: '目標',
+      title: 'Nikoniko-Chain_Colorful-Block-Puzzle', level: n => `レベル ${n}`, movesLbl: 'のこり手数', score: 'スコア', target: '目標',
       ariaSnd: '音のオン・オフ', ariaRst: 'このレベルを最初からやり直す', ariaBoard: 'ゲーム盤', restartAsk: 'やり直す？',
       hint: 'ボールをフリックして入れ替え、同じ色を3つ以上そろえて消そう。そろえて消した所のとなりの📦や、ロケット・爆弾が当たった📦はこわれて、中から🍓が出てくることも。🍓は下まで落とすと回収できるよ。<br>4つでロケット、L字・T字で爆弾、5つで★にじ玉。★は入れ替えた色をぜんぶ消す（タップだといちばん多い色）。特殊同士の入れ替えは大爆発！',
       names: ['赤', '黄', '緑', '青', '紫'],
@@ -255,7 +255,7 @@ body{
       next: 'つぎのレベル', retry: 'もう一度'
     },
     en: {
-      title: 'Poko Poko Blast', level: n => `Level ${n}`, movesLbl: 'Moves left', score: 'Score', target: 'Goal',
+      title: 'Nikoniko-Chain_Colorful-Block-Puzzle', level: n => `Level ${n}`, movesLbl: 'Moves left', score: 'Score', target: 'Goal',
       ariaSnd: 'Sound on / off', ariaRst: 'Restart this level', ariaBoard: 'Game board', restartAsk: 'Restart?',
       hint: 'Flick a ball to swap it and line up 3 or more of the same color. A 📦 next to a match — or hit by a rocket or bomb — breaks, and sometimes a 🍓 pops out. Drop the 🍓 to the bottom to collect them.<br>4 in a row = Rocket, L / T shape = Bomb, 5 in a row = ★ Rainbow. Swap ★ with a color to clear that color (tap it to clear the most common one). Swap two specials for a huge blast!',
       names: ['red', 'yellow', 'green', 'blue', 'purple'],
@@ -283,7 +283,7 @@ body{
   };
   let lang = 'ja';
   try {
-    const sv = localStorage.getItem('pokopoko-lang');
+    const sv = localStorage.getItem('nikoniko-chain-lang');
     lang = (sv === 'en' || sv === 'ja') ? sv : ((navigator.language || 'ja').toLowerCase().startsWith('ja') ? 'ja' : 'en');
   } catch (e) {}
   const T = (k, ...a) => { const v = I18N[lang][k]; return typeof v === 'function' ? v(...a) : v; };
@@ -323,7 +323,7 @@ body{
   /* ---------- sound (synthesised with Web Audio, soft & quiet) ---------- */
   const Snd = (() => {
     let ctx = null, master = null, noiseBuf = null, on = true, lastPop = 0, lastCrate = 0, stateCb = null;
-    try { on = localStorage.getItem('pokopoko-snd') !== 'off'; } catch (e) {}
+    try { on = localStorage.getItem('nikoniko-chain-snd') !== 'off'; } catch (e) {}
     const SCALE = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
     const ready = () => !!ctx && on && ctx.state !== 'closed';
     // iPhone's silent switch mutes Web Audio, but not a playing <audio> element.
@@ -392,7 +392,7 @@ body{
       isOn: () => on,
       running: () => !!ctx && ctx.state === 'running',
       onState(fn) { stateCb = fn; },
-      toggle() { on = !on; try { localStorage.setItem('pokopoko-snd', on ? 'on' : 'off'); } catch (e) {} if (on) init(); else if (keep) keep.pause(); },
+      toggle() { on = !on; try { localStorage.setItem('nikoniko-chain-snd', on ? 'on' : 'off'); } catch (e) {} if (on) init(); else if (keep) keep.pause(); },
       pop(step) {
         if (!ready()) return;
         const now = ctx.currentTime; if (now - lastPop < .03) return; lastPop = now;
@@ -1160,7 +1160,7 @@ body{
   }
 
   /* ---------- level flow ---------- */
-  const SAVE_KEY = 'pokopoko-save', LEVEL_KEY = 'pokopoko-level';
+  const SAVE_KEY = 'nikoniko-chain-save', LEVEL_KEY = 'nikoniko-chain-level';
   const TYPES = ['n', 'box', 'item', 'rh', 'rv', 'bomb', 'rainbow'];
   function saveGame() {
     try {
@@ -1268,7 +1268,7 @@ body{
     clearSave();
     try { localStorage.setItem(LEVEL_KEY, String(win ? level + 1 : level)); } catch (e) {}
     if (win) Snd.win(); else Snd.lose();
-    try { const best = +localStorage.getItem('pokopoko-best') || 0; if (score > best) localStorage.setItem('pokopoko-best', score); } catch (e) {}
+    try { const best = +localStorage.getItem('nikoniko-chain-best') || 0; if (score > best) localStorage.setItem('nikoniko-chain-best', score); } catch (e) {}
     $('ovTitle').textContent = T(win ? 'clear' : 'fail');
     const left = T('left', Math.max(goalBox - brokeBox, 0), Math.max(goalItem - gotItem, 0), goalItem > 0);
     const goalMsg = score >= scoreTarget
@@ -1333,7 +1333,7 @@ body{
 
   $('lang').addEventListener('click', () => {
     lang = lang === 'ja' ? 'en' : 'ja';
-    try { localStorage.setItem('pokopoko-lang', lang); } catch (e) {}
+    try { localStorage.setItem('nikoniko-chain-lang', lang); } catch (e) {}
     applyLang(); updateHUD();
     if (!ended) setCaption(T(goalItem ? 'goalBoth' : 'goalBox'));
   });
