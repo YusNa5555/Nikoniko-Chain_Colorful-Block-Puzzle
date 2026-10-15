@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nikoniko-Chain_Colorful-Block-Puzzle</title>
+<title>Poko Poko Blast</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap">
 <style>
 :root{
@@ -229,7 +229,7 @@ body{
   // ---------- language (praise words like GREAT! / COMBO! stay in English in both languages) ----------
   const I18N = {
     ja: {
-      title: 'Nikoniko-Chain_Colorful-Block-Puzzle', level: n => `レベル ${n}`, movesLbl: 'のこり手数', score: 'スコア', target: '目標',
+      title: 'Poko Poko Blast', level: n => `レベル ${n}`, movesLbl: 'のこり手数', score: 'スコア', target: '目標',
       ariaSnd: '音のオン・オフ', ariaRst: 'このレベルを最初からやり直す', ariaBoard: 'ゲーム盤', restartAsk: 'やり直す？',
       hint: 'ボールをフリックして入れ替え、同じ色を3つ以上そろえて消そう。そろえて消した所のとなりの📦や、ロケット・爆弾が当たった📦はこわれて、中から🍓が出てくることも。🍓は下まで落とすと回収できるよ。<br>4つでロケット、L字・T字で爆弾、5つで★にじ玉。★は入れ替えた色をぜんぶ消す（タップだといちばん多い色）。特殊同士の入れ替えは大爆発！',
       names: ['赤', '黄', '緑', '青', '紫'],
@@ -251,6 +251,7 @@ body{
       winText: (m, s) => `のこり ${m} 手でクリア！<br>スコア ${s}`, failText: '手数がなくなったよ',
       left: (b, i, has) => `📦 あと${b}個` + (has ? `・🍓 あと${i}個` : ''),
       goalHit: '⭐ スコア目標 達成！', goalMiss: (t, r) => `☆ 目標 ${t} 点まで あと ${r}`,
+      movesBonus: p => `のこり手数をボーナス得点に！（1手 ${p} 点）`,
       next: 'つぎのレベル', retry: 'もう一度'
     },
     en: {
@@ -276,6 +277,7 @@ body{
       winText: (m, s) => `Cleared with ${m} moves left!<br>Score ${s}`, failText: 'You ran out of moves',
       left: (b, i, has) => `📦 ${b} left` + (has ? ` · 🍓 ${i} left` : ''),
       goalHit: '⭐ Score goal reached!', goalMiss: (t, r) => `☆ Goal ${t} — ${r} to go`,
+      movesBonus: p => `Moves left → bonus points! (${p} each)`,
       next: 'Next level', retry: 'Try again'
     }
   };
@@ -310,7 +312,7 @@ body{
   }
 
   let cell = 0, grid = [], score = 0, moves = 0, level = 1, target = 0, nColors = 4;
-  let comboNow = 1, scoreTarget = 1500, scoreHit = false;
+  let comboNow = 1, scoreTarget = 1500, scoreHit = false, clearMoves = 0;
   let busy = true, ended = false, goalBox = 0, goalItem = 0, brokeBox = 0, gotItem = 0;
 
   function measure() { cell = board.clientWidth / COLS; board.style.fontSize = cell + 'px'; }
@@ -1087,9 +1089,26 @@ body{
     await sleep(300);
   }
 
+  // every move still left when the level is cleared turns into bonus points
+  const MOVE_BONUS = 150;
+  async function movesToScore() {
+    if (moves <= 0) return;
+    setCaption(T('movesBonus', MOVE_BONUS));
+    const total = moves * MOVE_BONUS, step = moves > 15 ? 35 : 55;
+    await sleep(300);
+    let i = 0;
+    while (moves > 0) {
+      moves--; score += MOVE_BONUS; i++;
+      updateHUD(); Snd.pop(Math.min(i - 1, 10));
+      await sleep(step);
+    }
+    floatText('+' + total, 'praise');
+    await sleep(700);
+  }
+
   async function afterTurn() {
     updateHUD();
-    if (brokeBox >= goalBox && gotItem >= goalItem) { await bonusTime(); return finish(true); }
+    if (brokeBox >= goalBox && gotItem >= goalItem) { clearMoves = moves; await bonusTime(); await movesToScore(); return finish(true); }
     if (moves <= 0) return finish(false);
     if (!hasMove()) {
       if (shuffle()) { floatText('SHUFFLE!', 'praise'); Snd.shuffle(); setCaption(T('shuffled')); await sleep(350); }
@@ -1178,7 +1197,7 @@ body{
       score = 0; brokeBox = 0; gotItem = 0;
       goalBox = Math.min(5 + level * 2, 14);
       goalItem = level >= 2 ? Math.min(level, 6) : 0;
-      moves = 18 + level * 2;
+      moves = Math.min(30, 18 + level * 2);
     }
     nColors = level <= 2 ? 4 : 5;
     scoreTarget = 1500 + (level - 1) * 750; scoreHit = score >= scoreTarget;
@@ -1256,7 +1275,7 @@ body{
       ? '<b class="goalmsg">' + T('goalHit') + '</b>'
       : '<span>' + T('goalMiss', scoreTarget, scoreTarget - score) + '</span>';
     $('ovText').innerHTML = win
-      ? T('winText', moves, score) + '<br>' + goalMsg
+      ? T('winText', clearMoves, score) + '<br>' + goalMsg
       : T('failText') + '<br>' + left + '<br>' + goalMsg;
     $('ovBtn').textContent = T(win ? 'next' : 'retry');
     $('ovBtn').onclick = () => { if (win) level++; $('overlay').classList.remove('show'); startLevel(); };
